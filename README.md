@@ -241,7 +241,6 @@ drone-gesture-control/
 | Firmware C (dérivé de X-CUBE-N6-AI-Hand-Landmarks) | **SLA0044** — ST proprietary |
 | Scripts Python | **MIT** |
 
-> Les en-têtes de licence ST sont conservés dans chaque source. Le firmware C est réservé au matériel STMicroelectronics.
 
 ---
 
