@@ -23,9 +23,9 @@
 
 ---
 
-## En bref / At a glance
+## En bref 
 
-Un système embarqué qui **transforme les gestes de la main en commandes de vol**, sans aucune télécommande. Toute l'intelligence — détection de la main et extraction de 21 points clés — tourne **directement sur le NPU de la carte STM32N6570-DK**, à pleine cadence vidéo, sans cloud ni GPU externe.
+Un système embarqué qui **transforme les gestes de la main en commandes de vol**, sans aucune télécommande. Toute l'intelligence ,détection de la main et extraction de 21 points clés , tourne **directement sur le NPU de la carte STM32N6570-DK**, à pleine cadence vidéo, sans cloud ni GPU externe.
 
 > A pure edge-AI control loop: a camera frame becomes a flight command in milliseconds, entirely on a microcontroller-class device.
 
