@@ -2,7 +2,7 @@
 
 # Gesture-Controlled Drone
 
-### Pilotage d'un drone par gestes de la main — IA 100 % embarquée sur STM32N6 (NPU)
+### Pilotage d'un drone par gestes de la main — IA embarquée sur STM32N6 (NPU)
 
 *Real-time hand-gesture drone control, fully on-device AI inference on an STM32N6 neural accelerator.*
 
