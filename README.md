@@ -201,8 +201,6 @@ pip install bleak pyserial
 python python/drone_control.py
 ```
 
-> Renseigner `ADDRESS = "XX:XX:XX:XX:XX:XX"` avec l'adresse BLE réelle du drone (`bluetoothctl scan on`).
-
 ---
 
 ## Résultats / Results
