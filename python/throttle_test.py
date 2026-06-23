@@ -1,50 +1,64 @@
 """
-throttle_test.py
-================
-Script de test unitaire pour valider la communication BLE GATT et la montée 
-progressive des moteurs du drone ST DRN2100 de manière isolée.
-
-Usage:
-    python throttle_test.py
+throttle_test.py — Test de la liaison BLE : rampe de throttle 0 -> 255 -> 0
+pip install bleak
 """
 
 import asyncio
 from bleak import BleakClient
 
-ADDRESS = "C0:28:6A:35:2F:33"  # Adresse MAC 
-JOYSTICK_HANDLE = 36           # Handle caractéristique GATT
+ADDRESS = "XX:XX:XX:XX:XX:XX"   # adresse BLE du drone
+JOYSTICK_HANDLE = 36
 
-# Commandes de configuration brutes (1 octet d'action à la fin)
 CALIBRATION = bytes([0, 0, 0, 0, 0, 0, 0x02])
 ARMING      = bytes([0, 0, 0, 0, 0, 0, 0x04])
 
+THROTTLE_STEP = 5
+
 async def main():
-    print(f"[Test] Connexion au drone à l'adresse : {ADDRESS}...")
+    print(f"Connexion au drone ({ADDRESS})...")
     async with BleakClient(ADDRESS) as client:
-        print("[Test] Connecté. Lancement de la phase de calibration (1s)...")
-        for _ in range(20):  # 20 itérations à 50ms = 1 seconde
+        print("Connecté")
+
+        # calibration 1s
+        print("Calibration...")
+        for _ in range(20):
             await client.write_gatt_char(JOYSTICK_HANDLE, CALIBRATION, response=False)
             await asyncio.sleep(0.05)
 
-        print("[Test] Phase d'armement des moteurs (1s)...")
+        # armement 1s
+        print("Armement...")
         for _ in range(20):
             await client.write_gatt_char(JOYSTICK_HANDLE, ARMING, response=False)
             await asyncio.sleep(0.05)
 
-        print("[Test] Envol progressif : Envoi d'une poussée légère (Throttle = 140)...")
-        # Structure de test : [0, yaw, throttle (140), roll, pitch, 0, commande_vol (0x04)]
-        payload_test = bytes([0, 0, 140, 0, 0, 0, 0x04])
-        for _ in range(40):  # Test dynamique pendant 2 secondes
-            await client.write_gatt_char(JOYSTICK_HANDLE, payload_test, response=False)
-            await asyncio.sleep(0.05)
+        # rampe de throttle
+        print("Throttle 0 -> 255 -> 0")
+        throttle = 0
+        direction = 1
+        try:
+            while True:
+                throttle = max(0, min(255, throttle))
+                # [0, yaw, throttle, roll, pitch, 0, commande]
+                payload = bytes([0, 0x80, throttle, 0x80, 0x80, 0, 0x04])
+                await client.write_gatt_char(JOYSTICK_HANDLE, payload, response=False)
 
-        print("[Test] Fin de la séquence — Arrêt de sécurité des moteurs")
-        # Coupe les gaz immédiatement en laissant le drone armé ou au sol
-        clear_payload = bytes([0, 0, 0, 0, 0, 0, 0x04])
-        await client.write_gatt_char(JOYSTICK_HANDLE, clear_payload, response=False)
+                throttle += direction * THROTTLE_STEP
+                if throttle >= 255:
+                    direction = -1
+                elif throttle <= 0:
+                    direction = 1
+
+                await asyncio.sleep(0.05)
+        except asyncio.CancelledError:
+            print("Arrêt")
+
+        # coupe les gaz
+        clear = bytes([0, 0, 0, 0, 0, 0, 0x04])
+        await client.write_gatt_char(JOYSTICK_HANDLE, clear, response=False)
+        print("Fin du test")
 
 if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        print("\nTest interrompu par l'utilisateur.")
+        print("\nTest interrompu.")

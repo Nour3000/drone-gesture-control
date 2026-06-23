@@ -50,6 +50,7 @@ Un système embarqué qui **transforme les gestes de la main en commandes de vol
 <br>
 
 <div align="center">
+
 ```
    Poing fermé          ->   STOP / hover
    Main inclinée droite ->   YAW droite
@@ -72,10 +73,6 @@ Un système embarqué qui **transforme les gestes de la main en commandes de vol
 |  Gesture logic -> USART1           |                 |  (asyncio)  |               |   + IMU 3 axes / PID|
 +------------------------------------+                 +-------------+               +--------------------+
 ```
-
-<div align="center">
-<sub>Diagramme interactif complet disponible dans <code>architecture.svg</code></sub>
-</div>
 
 ### Pourquoi un relais PC ? / Why a PC relay?
 
@@ -127,8 +124,6 @@ Gesture logic  -->  printf("forward\n")  ->  USART1
 </div>
 
 <br>
-
-Chaque geste est défini par **comparaison géométrique des coordonnées** des 21 landmarks (indexation type MediaPipe). Aucun ML supplémentaire : une logique déterministe, lisible et déboguable.
 
 Chaque geste est défini par **comparaison géométrique des coordonnées** des 21 landmarks (indexation type MediaPipe). Aucun ML supplémentaire : une logique déterministe, lisible et déboguable.
 
@@ -194,7 +189,7 @@ ARMING      = bytes([0, 0, 0, 0, 0, 0, 0x04])
 # 3. Repasser en "Boot from flash"
 ```
 
-### Relais Python (Linux / WSL — Python ≥ 3.10)
+### Relais Python (Linux / WSL — Python ≥ 3.8)
 
 ```bash
 pip install bleak pyserial
@@ -227,8 +222,9 @@ drone-gesture-control/
 ├── python/
 │   ├── drone_control.py      # [perso] Relais UART -> BLE GATT (20 Hz)
 │   └── throttle_test.py      # [perso] Banc de test throttle
-├── docs/rapport_projet.pdf   # Rapport complet (équipe)
-├── architecture.svg          # Diagramme d'architecture
+├── docs/
+│   ├── images/               # Photos du projet
+│   └── rapport_projet.pdf    # Rapport complet (équipe)
 └── README.md
 ```
 

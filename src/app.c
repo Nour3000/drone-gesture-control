@@ -702,24 +702,7 @@ static void decode_ld_landmark(roi_t *roi, ld_point_t *lm, ld_point_t *decoded)
   decoded->y = roi->cy + (lm->x - 0.5) * w * sin(rotation) + (lm->y - 0.5) * h * cos(rotation);
 }
 
-/*
- * Draw the 21 hand landmarks on the LCD and recognize the current gesture.
- *
- * The gesture is emitted on USART1 via printf() as a single line of text
- * ("stop\n", "forward\n", "up\n", etc.). A Python relay running on the
- * host PC reads the serial line and forwards the corresponding BLE
- * payload to the drone's flight controller.
- *
- * Landmark indexing (MediaPipe convention, see ld.c):
- *   0          : wrist
- *   1  -  4    : thumb       (4  = tip)
- *   5  -  8    : index       (8  = tip)
- *   9  - 12    : middle      (12 = tip)
- *  13  - 16    : ring        (16 = tip)
- *  17  - 20    : pinky       (20 = tip)
- *
- * On the LCD, +y points downward, so "above" means smaller y.
- */
+/* Affiche les 21 landmarks et reconnaît le geste pour envoyer la commande au drone */
 static void display_ld_hand(hand_info_t *hand)
 {
   const int disk_radius = DISK_RADIUS;
@@ -731,7 +714,7 @@ static void display_ld_hand(hand_info_t *hand)
   int STOP = 0;
   int i;
 
-  /* 1. Decode all 21 landmarks from the ROI into screen coordinates */
+  /* décodage des landmarks en coordonnées écran */
   for (i = 0; i < LD_LANDMARK_NB; i++) {
     decode_ld_landmark(roi, &hand->ld_landmarks[i], &decoded);
     x[i] = (int)decoded.x;
@@ -739,14 +722,14 @@ static void display_ld_hand(hand_info_t *hand)
     is_clamped[i] = clamp_point_with_margin(&x[i], &y[i], disk_radius);
   }
 
-  /* 2. Draw each landmark as a yellow dot */
+  /* dessin des points */
   for (i = 0; i < LD_LANDMARK_NB; i++) {
     if (is_clamped[i])
       continue;
     UTIL_LCD_FillCircle(x[i], y[i], disk_radius, UTIL_LCD_COLOR_YELLOW);
   }
 
-  /* 3. Draw the skeleton connecting landmarks (blue, for readability) */
+  /* squelette en bleu (plus lisible que noir sur le flux caméra) */
   for (i = 0; i < LD_BINDING_NB; i++) {
     if (is_clamped[ld_bindings_idx[i][0]] || is_clamped[ld_bindings_idx[i][1]])
       continue;
@@ -755,14 +738,13 @@ static void display_ld_hand(hand_info_t *hand)
                       UTIL_LCD_COLOR_BLUE);
   }
 
-  /* 4. Gesture recognition — geometric rules over the 21 landmarks.
-   *
-   * Each branch tests a unique geometric configuration so that a single
-   * pose maps to a single command. The recognized gesture is sent over
-   * USART1 to the host PC, which relays it to the drone over BLE.
+  /*
+   * Reconnaissance des gestes — on compare les positions des landmarks
+   * pour déterminer la commande à envoyer via printf sur USART1.
+   * Le script Python côté PC lit ces chaînes et les traduit en BLE.
    */
 
-  /* STOP — closed fist: every fingertip below its PIP joint (tip y > pip y) */
+  /* poing fermé = stop (les 4 doigts repliés) */
   if (y[7]  > y[5]  &&
       y[11] > y[9]  &&
       y[15] > y[13] &&
@@ -770,7 +752,7 @@ static void display_ld_hand(hand_info_t *hand)
     printf("stop\n");
     STOP = 1;
   }
-  /* FORWARD — open hand, palm facing down, thumb on the right side */
+  /* main ouverte, pouce à droite = forward */
   else if (y[7]  < y[5]  &&
            y[11] < y[9]  &&
            y[15] < y[13] &&
@@ -781,7 +763,7 @@ static void display_ld_hand(hand_info_t *hand)
     printf("forward\n");
     STOP = 0;
   }
-  /* BACKWARD — open hand, palm facing up, thumb on the left side */
+  /* main ouverte, pouce à gauche = backward */
   else if (y[7]  < y[5]  &&
            y[11] < y[9]  &&
            y[15] < y[13] &&
@@ -793,7 +775,7 @@ static void display_ld_hand(hand_info_t *hand)
     printf("backward\n");
     STOP = 0;
   }
-  /* LEFT — the four fingers (index..pinky) all lie left of the wrist */
+  /* les 4 doigts à gauche du poignet = left */
   else if (x[7]  < x[0]  &&
            x[11] < x[0]  &&
            x[15] < x[0]  &&
@@ -803,7 +785,7 @@ static void display_ld_hand(hand_info_t *hand)
     printf("left\n");
     STOP = 0;
   }
-  /* RIGHT — the four fingers all lie right of the wrist */
+  /* les 4 doigts à droite du poignet = right */
   else if (x[7]  > x[0]  &&
            x[11] > x[0]  &&
            x[15] > x[0]  &&
@@ -812,15 +794,15 @@ static void display_ld_hand(hand_info_t *hand)
     printf("right\n");
     STOP = 0;
   }
-  /* UP — index tip above middle-finger DIP, thumb to the right */
+  /* index au dessus du majeur + pouce à droite = up */
   else if (y[7] < y[11] && x[3] > x[19] && !STOP) {
     printf("up\n");
   }
-  /* DOWN — index tip above middle-finger DIP, thumb to the left */
+  /* index au dessus du majeur + pouce à gauche = down */
   else if (y[7] < y[11] && x[3] < x[19] && !STOP) {
     printf("down\n");
   }
-  /* No pose matched */
+  /* rien reconnu */
   else {
     printf("waiting\n");
   }
