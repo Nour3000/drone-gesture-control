@@ -248,5 +248,5 @@ drone-gesture-control/
 
 <div align="center">
 <br>
-<sub>Projet académique — ENSEA Cergy-Pontoise · Semestre 7 · 2025–2026</sub>
+<sub>Projet académique — ENSEA Cergy-Pontoise · Semestre 8 · 2025–2026</sub>
 </div>
